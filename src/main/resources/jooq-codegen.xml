@@ -1,0 +1,12 @@
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.16.0.xsd">
+    <jdbc>
+        <driver>${JDBC_DRIVER}</driver>
+        <url>${JDBC_URL}</url>
+        <properties>${JDBC_PROPS}</properties>
+    </jdbc>
+    <generator>
+        <target>
+            <packageName>ru.neoflex.deal.configuration</packageName>
+        </target>
+    </generator>
+</configuration>

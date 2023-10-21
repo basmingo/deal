@@ -1,0 +1,30 @@
+version: "3"
+services:
+  deal:
+    container_name: conveyor_deal_service
+    build:
+      context: ../
+    image: credit_conveyor/deal:latest
+    ports:
+      - "8080:8080"
+  postgres:
+    image: postgres:latest
+    container_name: conveyor_deal_database
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: conveyor_deal
+      PGDATA: /data/postgres
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - credit-conveyor-deal-db-network
+    ports:
+      - "5431:5432"
+    restart: always
+networks:
+  credit-conveyor-deal-db-network:
+    driver: bridge
+volumes:
+  database:
+  pgAdmin:
