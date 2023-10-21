@@ -1,36 +1,56 @@
 package ru.neoflex.deal.model
 
 import ru.neoflex.deal.model.jsonb.{Employment, Passport}
+import zio.{Task, ZIO}
 import zio.json.DecoderOps
 
 import java.time.LocalDate
 
-case class ClientData (clientId: Integer,
+case class ClientDbResponseDto(clientId: Integer,
+                               firstName: String,
+                               lastName: String,
+                               middleName: String,
+                               birthdate: LocalDate,
+                               email: String,
+                               gender: String,
+                               maritalStatus: String,
+                               dependentAmount: Integer,
+                               account: String)
+
+
+case class Client(clientId: Option[Int],
                   firstName: String,
                   lastName: String,
-                  middleName: String,
+                  middleName: Option[String],
                   birthdate: LocalDate,
                   email: String,
                   gender: String,
                   maritalStatus: String,
-                  dependentAmount: Integer,
-                  account: String)
+                  dependentAmount: Option[Integer],
+                  account: Option[String],
+                  passport: Seq[Passport],
+                  employment: Seq[Employment])
 
-case class Client (clientData: ClientData,
-                   passportData: Seq[Passport],
-                   employmentData: Seq[Employment]) {
+object ClientMapper {
+  def toClient(clientData: ClientDbResponseDto,
+               passportData: Seq[Passport],
+               employmentData: Seq[Employment]): Task[Client] =
 
-   val clientId: Option[Int] = Option(clientData.clientId.toInt)
-   val firstName: String = clientData.firstName
-   val lastName: String = clientData.lastName
-   val middleName: Option[String] = Option(clientData.middleName)
-   val birthdate: LocalDate = clientData.birthdate
-   val email: String = clientData.email
-   val gender: String = clientData.gender
-   val maritalStatus: String = clientData.maritalStatus
-   val dependentAmount: Option[Integer] = Option(clientData.dependentAmount)
-   val account: Option[String] = Option(clientData.account)
-   val passport: Seq[Passport] = passportData
-   val employment: Seq[Employment] = employmentData
+    ZIO.succeed(
+      Client(
+        Option(clientData.clientId.toInt),
+        clientData.firstName,
+        clientData.lastName,
+        Option(clientData.middleName),
+        clientData.birthdate,
+        clientData.email,
+        clientData.gender,
+        clientData.maritalStatus,
+        Option(clientData.dependentAmount),
+        Option(clientData.account),
+        passportData,
+        employmentData
+      )
+    )
 }
 

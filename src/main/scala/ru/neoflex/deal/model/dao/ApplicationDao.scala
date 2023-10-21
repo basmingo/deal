@@ -25,29 +25,29 @@ trait ApplicationDao {
 }
 
 case class ApplicationDaoImpl(dsl: JooqDsl) extends ApplicationDao {
-  override def insert(application: Application): Task[Unit] =
-    dsl.getJooqContext
-      .map(_.insertInto(APPLICATION)
-            .columns(
-              APPLICATION.APPLICATION_ID,
-              APPLICATION.CLIENT_ID,
-              APPLICATION.CREDIT_ID,
-              APPLICATION.CREATED,
-              APPLICATION.APPLIED_OFFER,
-              APPLICATION.SIGNED,
-              APPLICATION.SES_CODE)
-            .values(
-              application.applicationId.orNull,
-              application.clientId,
-              application.creditId,
-              application.created,
-              application.appliedOffer
-                .map(toJsonb)
-                .orNull,
-              application.signed.orNull,
-              application.sesCode.orNull)
-            .execute
-      )
+  override def insert(application: Application): Task[Unit] = ???
+//    dsl.getJooqContext
+//      .map(_.insertInto(APPLICATION)
+//            .columns(
+//              APPLICATION.APPLICATION_ID,
+//              APPLICATION.CLIENT_ID,
+//              APPLICATION.CREDIT_ID,
+//              APPLICATION.CREATED,
+//              APPLICATION.APPLIED_OFFER,
+//              APPLICATION.SIGNED,
+//              APPLICATION.SES_CODE)
+//            .values(
+//              application.applicationId.orNull,
+//              application.clientId,
+//              application.creditId,
+//              application.created,
+//              application.appliedOffer
+//                .map(toJsonb)
+//                .orNull,
+//              application.signed.orNull,
+//              application.sesCode.orNull)
+//            .execute
+//      )
 
   override def get(id: Int): Task[Application] =
     ApplicationMapper.toModel(for {
