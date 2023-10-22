@@ -13,8 +13,8 @@ case class ApplicationData(applicationId: Integer,
                            sesCode: Integer)
 case class Application(applicationData: ApplicationData) {
    val applicationId: Option[Integer] = Option(applicationData.applicationId)
-   val clientId: Client = applicationData.client
-   val creditId: Credit = applicationData.credit
+   val client: Client = applicationData.client
+   val credit: Credit = applicationData.credit
    val created: LocalDateTime = applicationData.created
    val appliedOffer: Option[ApplicationOffer] = Option(applicationData.appliedOffer)
    val signed: Option[LocalDateTime] = Option(applicationData.signed)

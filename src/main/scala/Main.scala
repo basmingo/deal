@@ -11,11 +11,14 @@ import scala.language.implicitConversions
 
 object Main extends ZIOAppDefault {
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
-    val client = Client(ClientDbResponseDto(null, "Zilko", "Zobrich", null, LocalDate.now, "zilko@mail", "MALE", "SINGLE", 1000, "?"), Seq(Passport(1234, 123456, "no", "noo")), Seq(Employment("?", "?", BigDecimal(100), "OWNER", 112, 110)))
+//    val client = Client(ClientDbResponseDto(null, "Zilko", "Zobrich", null, LocalDate.now, "zilko@mail", "MALE", "SINGLE", 1000, "?"), Seq(Passport(1234, 123456, "no", "noo")), Seq(Employment("?", "?", BigDecimal(100), "OWNER", 112, 110)))
 //    val credit = Credit(CreditJooqData(null, 5, java.math.BigDecimal.valueOf(1), java.math.BigDecimal.valueOf(0.3), java.math.BigDecimal.valueOf(0.14), true, false, "CALCULATED"))
+    val credit = Credit(None, 1002, 0.23, 0.123, None, true, false, "CALCULATED")
+    val client = Client(None, "ii", "pp", None, LocalDate.now, "?", "MALE", "SINGLE", None, None, Seq.empty[Passport], Seq.empty[Employment])
     for {
       dsl <- ZIO.service[JooqDsl]
-      get <- CreditDao.get(3, dsl)
+      _   <- CreditDao.insert(credit, dsl)
+      get <- ClientDao.get(3, dsl)
       _   <- ZIO.log(get.toString)
     } yield()
   }.provide(

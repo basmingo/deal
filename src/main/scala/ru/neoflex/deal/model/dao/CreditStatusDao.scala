@@ -7,11 +7,11 @@ import zio.{Task, ZIO, ZLayer}
 
 @accessible
 trait CreditStatusDao {
-  def creditStatusId(creditStatus: String): Task[Integer]
+  def getCreditStatusId(creditStatus: String): Task[Integer]
 }
 
 case class CreditStatusDaoImpl(dsl: JooqDsl) extends CreditStatusDao {
-  override def creditStatusId(creditStatus: String): Task[Integer] =
+  override def getCreditStatusId(creditStatus: String): Task[Integer] =
     dsl.getJooqContext
       .map(_.select(CREDIT_STATUS.CREDIT_STATUS_ID)
             .from(CREDIT_STATUS)

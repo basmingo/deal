@@ -13,33 +13,37 @@ import scala.language.implicitConversions
 trait CreditDao {
   def get(id: Integer, dsl: JooqDsl): Task[Credit]
 
-  //  def insert(credit: Credit, dsl: JooqDsl): Task[Unit]
+  def insert(credit: Credit, dsl: JooqDsl): Task[Unit]
+
+  def getLastId(dsl: JooqDsl): Task[Integer]
 }
 
 case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
-  //  override def insert(credit: Credit, dsl: JooqDsl): Task[Unit] = ???
-  //    for {
-  //      creditStatus <- creditStatusDao.creditStatusId(credit.creditStatus)
-  //      dsl <- dsl.getJooqContext
-  //    } yield dsl.insertInto(CREDIT)
-  //      .columns(
-  //        CREDIT.TERM,
-  //        CREDIT.MONTHLY_PAYMENT,
-  //        CREDIT.RATE,
-  //        CREDIT.PSK,
-  //        CREDIT.WITH_INSURANCE,
-  //        CREDIT.SALARY_CLIENT,
-  //        CREDIT.CREDIT_STATUS)
-  //      .values(
-  //        credit.term,
-  //        credit.monthlyPayment,
-  //        credit.rate,
-  //        credit.psk.orNull,
-  //        credit.withInsurance,
-  //        credit.salaryClient,
-  //        creditStatus
-  //      )
-  //      .execute
+  override def insert(credit: Credit, dsl: JooqDsl): Task[Unit] =
+    for {
+      dsl <- dsl.getJooqContext
+      creditStatus <- creditStatusDao.getCreditStatusId(credit.creditStatus)
+      _ <- ZIO.succeed(dsl.insertInto(
+        CREDIT,
+        CREDIT.TERM,
+        CREDIT.MONTHLY_PAYMENT,
+        CREDIT.RATE,
+        CREDIT.PSK,
+        CREDIT.WITH_INSURANCE,
+        CREDIT.SALARY_CLIENT,
+        CREDIT.CREDIT_STATUS)
+        .values(
+          credit.term,
+          new java.math.BigDecimal(credit.monthlyPayment.toString),
+          new java.math.BigDecimal(credit.rate.toString),
+          credit.psk
+            .map(it => new java.math.BigDecimal(it.toString))
+            .orNull,
+          credit.withInsurance,
+          credit.salaryClient,
+          creditStatus)
+        .execute)
+    } yield ()
 
   override def get(id: Integer, dsl: JooqDsl): Task[Credit] =
     for {
@@ -60,6 +64,16 @@ case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
         .fetchAnyInto(classOf[CreditDbResponseDto]))
       credit <- CreditMapper.toCredit(creditData)
     } yield credit
+
+  override def getLastId(dsl: JooqDsl): Task[Integer] =
+    for {
+      ctx <- dsl.getJooqContext
+      id <- ZIO.succeed(ctx.select(CREDIT.CREDIT_ID)
+        .from(CREDIT)
+        .orderBy(CREDIT.CREDIT_ID.desc)
+        .limit(1)
+        .fetchOneInto(classOf[Integer]))
+    } yield id
 }
 
 object CreditDaoImpl {

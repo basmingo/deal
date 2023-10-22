@@ -18,6 +18,8 @@ trait ClientDao {
   def insert(client: Client, dsl: JooqDsl): Task[Unit]
 
   def get(id: Int, dsl: JooqDsl): Task[Client]
+
+  def getLastId(dsl: JooqDsl): Task[Integer]
 }
 
 case class ClientDaoImpl(
@@ -27,8 +29,8 @@ case class ClientDaoImpl(
                           maritalStatusDao: MaritalStatusDao) extends ClientDao {
   override def insert(client: Client, dsl: JooqDsl): Task[Unit] =
     for {
-      dsl <- dsl.getJooqContext
-      _ <- ZIO.succeed(dsl.insertInto(CLIENT)
+      ctx <- dsl.getJooqContext
+      _ <- ZIO.succeed(ctx.insertInto(CLIENT)
         .columns(CLIENT.FIRST_NAME,
           CLIENT.LAST_NAME,
           CLIENT.MIDDLE_NAME,
@@ -43,35 +45,30 @@ case class ClientDaoImpl(
           client.middleName.orNull,
           client.birthdate,
           client.email,
-          dsl.select(GENDER_TYPE.GENDER_TYPE_ID)
+          ctx.select(GENDER_TYPE.GENDER_TYPE_ID)
             .from(GENDER_TYPE)
             .where(GENDER_TYPE.GENDER.eq(client.gender))
             .fetchOneInto(classOf[Integer]),
-          dsl.select(MARITAL_STATUS_TYPE.MARITAL_STATUS_ID)
+          ctx.select(MARITAL_STATUS_TYPE.MARITAL_STATUS_ID)
             .from(MARITAL_STATUS_TYPE)
             .where(MARITAL_STATUS_TYPE.STATUS.eq(client.maritalStatus))
             .fetchOneInto(classOf[Integer]),
           client.dependentAmount.orNull,
           client.account.orNull)
         .execute())
-
-      id <- ZIO.succeed(dsl.select(CLIENT.CLIENT_ID)
-        .from(CLIENT)
-        .orderBy(CLIENT.CLIENT_ID.desc)
-        .limit(1)
-        .fetchOneInto(classOf[Integer]))
+      id <- getLastId(dsl)
 
       passportData <- ZIO.succeed(client.passport.map(passport => JSONB.jsonb(passport.toJson)))
       employmentData <- ZIO.succeed(client.employment.map(employment => JSONB.jsonb(employment.toJson)))
 
       _ <- ZIO.succeed(passportData
-        .map(it => dsl.insertInto(PASSPORT, PASSPORT.PASSPORT_DATA, PASSPORT.CLIENT_ID)
+        .map(it => ctx.insertInto(PASSPORT, PASSPORT.PASSPORT_DATA, PASSPORT.CLIENT_ID)
           .values(it, id)
           .execute))
         .fork
 
       _ <- ZIO.succeed(employmentData
-        .map(it => dsl.insertInto(EMPLOYMENT, EMPLOYMENT.EMPLOYMENT_DATA, EMPLOYMENT.CLIENT_ID)
+        .map(it => ctx.insertInto(EMPLOYMENT, EMPLOYMENT.EMPLOYMENT_DATA, EMPLOYMENT.CLIENT_ID)
           .values(it, id)
           .execute))
         .fork
@@ -101,6 +98,16 @@ case class ClientDaoImpl(
       employments <- employmentDao.getByClient(id)
       client <- ClientMapper.toClient(clientData, passports, employments)
     } yield client
+
+  override def getLastId(dsl: JooqDsl): Task[Integer] =
+    for {
+      ctx <- dsl.getJooqContext
+      id <- ZIO.succeed(ctx.select(CLIENT.CLIENT_ID)
+      .from(CLIENT)
+      .orderBy(CLIENT.CLIENT_ID.desc)
+      .limit(1)
+      .fetchOneInto(classOf[Integer]))
+    } yield id
 }
 
 object ClientDaoImpl {
