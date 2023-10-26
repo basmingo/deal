@@ -18,13 +18,15 @@ case class PassportDaoImpl(dsl: JooqDsl) extends PassportDao {
   override def getByClient(id: Int): Task[Seq[Passport]] =
     for {
       dsl <- dsl.getJooqContext
-      passportData <- ZIO.succeed(dsl.select(PASSPORT.PASSPORT_DATA)
-        .from(PASSPORT)
-        .where(PASSPORT.CLIENT_ID.eq(id))
-        .fetch()
-        .into(classOf[String]))
-    } yield passportData
-      .toSeq
+      passportData <- ZIO.succeed(
+                        dsl
+                          .select(PASSPORT.PASSPORT_DATA)
+                          .from(PASSPORT)
+                          .where(PASSPORT.CLIENT_ID.eq(id))
+                          .fetch()
+                          .into(classOf[String])
+                      )
+    } yield passportData.toSeq
       .map(_.fromJson[Passport])
       .collect { case Right(value) => value }
 }
@@ -36,4 +38,3 @@ object PassportDaoImpl {
     } yield PassportDaoImpl(dsl)
   }
 }
-

@@ -13,10 +13,12 @@ trait CreditStatusDao {
 case class CreditStatusDaoImpl(dsl: JooqDsl) extends CreditStatusDao {
   override def getCreditStatusId(creditStatus: String): Task[Integer] =
     dsl.getJooqContext
-      .map(_.select(CREDIT_STATUS.CREDIT_STATUS_ID)
-            .from(CREDIT_STATUS)
-            .where(CREDIT_STATUS.CREDIT_STATUS_TYPE.eq(creditStatus))
-            .execute)
+      .map(
+        _.select(CREDIT_STATUS.CREDIT_STATUS_ID)
+          .from(CREDIT_STATUS)
+          .where(CREDIT_STATUS.CREDIT_STATUS_TYPE.eq(creditStatus))
+          .execute
+      )
 }
 
 object CreditStatusDaoImpl {

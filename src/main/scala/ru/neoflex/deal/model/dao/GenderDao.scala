@@ -12,10 +12,12 @@ trait GenderDao {
 case class GenderDaoImpl(dsl: JooqDsl) extends GenderDao {
   override def genderId(gender: String): Task[Integer] =
     dsl.getJooqContext
-      .map(_.select(GENDER_TYPE.GENDER_TYPE_ID)
-            .from(GENDER_TYPE)
-            .where(GENDER_TYPE.GENDER.eq(gender))
-            .fetchAnyInto(classOf[Integer]))
+      .map(
+        _.select(GENDER_TYPE.GENDER_TYPE_ID)
+          .from(GENDER_TYPE)
+          .where(GENDER_TYPE.GENDER.eq(gender))
+          .fetchAnyInto(classOf[Integer])
+      )
 }
 
 object GenderDaoImpl {
