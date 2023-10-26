@@ -1,21 +1,26 @@
 package ru.neoflex.deal.model.dao
 
+import org.jooq.DSLContext
 import ru.neoflex.deal.configuration.JooqDsl
 import ru.neoflex.deal.configuration.deal.tables.Credit._
 import ru.neoflex.deal.configuration.deal.tables.CreditStatus._
 import ru.neoflex.deal.model.{Credit, CreditDbResponseDto, CreditMapper}
 import zio.macros.accessible
-import zio.{Task, ZIO, ZLayer}
+import zio.{IO, Task, UIO, ZIO, ZLayer}
 
+import java.lang.RuntimeException
 import scala.language.implicitConversions
+import scala.util.Try
 
 @accessible
 trait CreditDao {
-  def get(id: Integer, dsl: JooqDsl): Task[Credit]
+  def get(id: Int, dsl: JooqDsl): Task[Credit]
 
   def insert(credit: Credit, dsl: JooqDsl): Task[Unit]
 
-  def getLastId(dsl: JooqDsl): Task[Integer]
+  def getLastId(dsl: JooqDsl): Task[Int]
+
+  def deleteAll(dsl: JooqDsl): Task[Unit]
 }
 
 case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
@@ -50,11 +55,11 @@ case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
            )
     } yield ()
 
-  override def get(id: Integer, dsl: JooqDsl): Task[Credit] =
+  override def get(id: Int, dsl: JooqDsl): Task[Credit] =
     for {
-      dsl <- dsl.getJooqContext
+      ctx <- dsl.getJooqContext
       creditData <- ZIO.succeed(
-                      dsl
+                      ctx
                         .select(
                           CREDIT.CREDIT_ID,
                           CREDIT.TERM,
@@ -74,18 +79,26 @@ case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
       credit <- CreditMapper.toCredit(creditData)
     } yield credit
 
-  override def getLastId(dsl: JooqDsl): Task[Integer] =
+  override def getLastId(dsl: JooqDsl): Task[Int] =
     for {
       ctx <- dsl.getJooqContext
-      id <- ZIO.succeed(
-              ctx
-                .select(CREDIT.CREDIT_ID)
-                .from(CREDIT)
-                .orderBy(CREDIT.CREDIT_ID.desc)
-                .limit(1)
-                .fetchOneInto(classOf[Integer])
-            )
+      id <- ZIO
+              .succeed(
+                ctx
+                  .select(CREDIT.CREDIT_ID)
+                  .from(CREDIT)
+                  .orderBy(CREDIT.CREDIT_ID.desc)
+                  .limit(1)
+                  .fetchOneInto(classOf[Integer])
+                  .toInt
+              )
     } yield id
+
+  override def deleteAll(dsl: JooqDsl): Task[Unit] =
+    for {
+      ctx <- dsl.getJooqContext
+      _   <- ZIO.succeed(ctx.delete(CREDIT).execute())
+    } yield ()
 }
 
 object CreditDaoImpl {
