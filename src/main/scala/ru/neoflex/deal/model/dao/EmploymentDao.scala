@@ -18,15 +18,15 @@ case class EmploymentDaoImpl(dsl: JooqDsl) extends EmploymentDao {
   override def getByClient(id: Int): Task[Seq[Employment]] =
     for {
       dsl <- dsl.getJooqContext
-      passportData <- ZIO.succeed(
-                        dsl
-                          .select(EMPLOYMENT.EMPLOYMENT_DATA)
-                          .from(EMPLOYMENT)
-                          .where(EMPLOYMENT.CLIENT_ID.eq(id))
-                          .fetch()
-                          .into(classOf[String])
-                      )
-    } yield passportData.toSeq
+      employmentData <- ZIO.succeed(
+                          dsl
+                            .select(EMPLOYMENT.EMPLOYMENT_DATA)
+                            .from(EMPLOYMENT)
+                            .where(EMPLOYMENT.CLIENT_ID.eq(id))
+                            .fetch()
+                            .into(classOf[String])
+                        )
+    } yield employmentData.toSeq
       .map(_.fromJson[Employment])
       .collect { case Right(value) => value }
 }

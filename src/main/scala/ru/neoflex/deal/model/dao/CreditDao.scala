@@ -1,17 +1,17 @@
 package ru.neoflex.deal.model.dao
 
-import org.jooq.DSLContext
+import org.jooq.JSONB
 import ru.neoflex.deal.configuration.JooqDsl
 import ru.neoflex.deal.configuration.deal.tables.Credit._
 import ru.neoflex.deal.configuration.deal.tables.CreditStatus._
-import ru.neoflex.deal.model.Credit._
+import ru.neoflex.deal.configuration.deal.tables.PaymentSchedule._
+import ru.neoflex.deal.model.jsonb.PaymentScheduleElement
 import ru.neoflex.deal.model.{Credit, CreditDbResponseDto, CreditMapper}
+import zio.json.EncoderOps
 import zio.macros.accessible
-import zio.{IO, Task, UIO, ZIO, ZLayer}
+import zio.{Task, ZIO, ZLayer}
 
-import java.lang.RuntimeException
 import scala.language.implicitConversions
-import scala.util.Try
 
 @accessible
 trait CreditDao {
@@ -24,13 +24,13 @@ trait CreditDao {
   def deleteAll(dsl: JooqDsl): Task[Unit]
 }
 
-case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
+case class CreditDaoImpl(creditStatusDao: CreditStatusDao, paymentScheduleDao: PaymentScheduleDao) extends CreditDao {
   override def insert(credit: Credit, dsl: JooqDsl): Task[Unit] =
     for {
-      dsl          <- dsl.getJooqContext
+      ctx          <- dsl.getJooqContext
       creditStatus <- creditStatusDao.getCreditStatusId(credit.creditStatus)
       _ <- ZIO.succeed(
-             dsl
+             ctx
                .insertInto(
                  CREDIT,
                  CREDIT.TERM,
@@ -54,6 +54,8 @@ case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
                )
                .execute
            )
+      lastId <- getLastId(dsl)
+      _      <- paymentScheduleDao.insert(lastId, credit.creditSchedule, dsl)
     } yield ()
 
   override def get(id: Int, dsl: JooqDsl): Task[Credit] =
@@ -77,7 +79,8 @@ case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
                         .where(CREDIT.CREDIT_ID.eq(id))
                         .fetchAnyInto(classOf[CreditDbResponseDto])
                     )
-      credit <- CreditMapper.toCredit(creditData)
+      paymentSchedule <- paymentScheduleDao.get(creditData.creditId, dsl)
+      credit          <- CreditMapper.toCredit(creditData, paymentSchedule)
     } yield credit
 
   override def getLastId(dsl: JooqDsl): Task[Int] =
@@ -103,9 +106,10 @@ case class CreditDaoImpl(creditStatusDao: CreditStatusDao) extends CreditDao {
 }
 
 object CreditDaoImpl {
-  val live: ZLayer[CreditStatusDao, Nothing, CreditDaoImpl] = ZLayer {
+  val live: ZLayer[PaymentScheduleDao with CreditStatusDao, Nothing, CreditDaoImpl] = ZLayer {
     for {
       creditStatusDao <- ZIO.service[CreditStatusDao]
-    } yield CreditDaoImpl(creditStatusDao)
+      paymentSchedule <- ZIO.service[PaymentScheduleDao]
+    } yield CreditDaoImpl(creditStatusDao, paymentSchedule)
   }
 }

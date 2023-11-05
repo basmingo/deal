@@ -2,8 +2,11 @@ package ru.neoflex.deal.model.dao
 
 import ru.neoflex.deal.configuration.{DslConnection, JooqDsl}
 import ru.neoflex.deal.model.Credit
+import ru.neoflex.deal.model.jsonb.PaymentScheduleElement
 import zio.{Scope, ZIO}
 import zio.test.{Spec, TestEnvironment, ZIOSpecAbstract, ZIOSpecDefault, assertTrue, suite, test}
+
+import java.time.LocalDate
 
 object CreditDaoTest extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -21,7 +24,7 @@ object CreditDaoTest extends ZIOSpecDefault {
           creditDao <- ZIO.service[CreditDao]
           dsl       <- ZIO.service[JooqDsl]
           _ <-
-            creditDao.insert(Credit(None, 1, 0.5, 0.5, None, withInsurance = true, salaryClient = true, "ISSUED"), dsl)
+            creditDao.insert(Credit(None, 1, 0.5, 0.5, None, withInsurance = true, salaryClient = true, "ISSUED", Seq(PaymentScheduleElement(10, LocalDate.now, 10, 10, 10, 10))), dsl)
           _ <-
             creditDao.insert(
               Credit(None, 100, 0.1, 0.1, Some(0.321), withInsurance = true, salaryClient = true, "CALCULATED"),
