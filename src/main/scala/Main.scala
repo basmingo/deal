@@ -41,7 +41,10 @@ object Main extends ZIOAppDefault {
 //    )
     for {
       dsl <- ZIO.service[JooqDsl]
-      _   <- CreditDao.insert(credit, dsl)
+//      _   <- CreditDao.insert(credit, dsl).repeat(Schedule.recurs(100000))
+      a   <- CreditDao.get(19000, dsl).repeatN(10000)
+      _   <- ZIO.log(a.toString)
+
 //      get <- ClientDao.get(3, dsl)
 //      _   <- ZIO.log(get.toString)
     } yield ()

@@ -3,10 +3,10 @@ package ru.neoflex.deal.model.dao
 import org.jooq.JSONB
 import ru.neoflex.deal.configuration.JooqDsl
 import ru.neoflex.deal.configuration.deal.tables.Client._
-import ru.neoflex.deal.configuration.deal.tables.Passport._
+import ru.neoflex.deal.configuration.deal.tables.Employment._
 import ru.neoflex.deal.configuration.deal.tables.GenderType._
 import ru.neoflex.deal.configuration.deal.tables.MaritalStatusType._
-import ru.neoflex.deal.configuration.deal.tables.Employment._
+import ru.neoflex.deal.configuration.deal.tables.Passport._
 import ru.neoflex.deal.model.{Client, ClientDbResponseDto, ClientMapper}
 import zio.json.EncoderOps
 import zio.macros.accessible
@@ -14,12 +14,13 @@ import zio.{Task, ZIO, ZLayer}
 
 @accessible
 trait ClientDao {
+  def deleteAll(dsl: JooqDsl): Task[Unit]
 
   def insert(client: Client, dsl: JooqDsl): Task[Unit]
 
   def get(id: Int, dsl: JooqDsl): Task[Client]
 
-  def getLastId(dsl: JooqDsl): Task[Integer]
+  def getLastId(dsl: JooqDsl): Task[Int]
 }
 
 case class ClientDaoImpl(
@@ -129,7 +130,7 @@ case class ClientDaoImpl(
       client      <- ClientMapper.toClient(clientData, passports, employments)
     } yield client
 
-  override def getLastId(dsl: JooqDsl): Task[Integer] =
+  override def getLastId(dsl: JooqDsl): Task[Int] =
     for {
       ctx <- dsl.getJooqContext
       id <- ZIO.succeed(
@@ -139,8 +140,15 @@ case class ClientDaoImpl(
                 .orderBy(CLIENT.CLIENT_ID.desc)
                 .limit(1)
                 .fetchOneInto(classOf[Integer])
+                .toInt
             )
     } yield id
+
+  override def deleteAll(dsl: JooqDsl): Task[Unit] =
+    for {
+      ctx <- dsl.getJooqContext
+      _   <- ZIO.succeed(ctx.delete(CLIENT).execute())
+    } yield ()
 }
 
 object ClientDaoImpl {

@@ -878,7 +878,8 @@ ALTER TABLE ONLY deal.credit
 --
 
 ALTER TABLE ONLY deal.employment
-    ADD CONSTRAINT employment_client_client_id_fk FOREIGN KEY (client_id) REFERENCES deal.client(client_id);
+    ADD CONSTRAINT employment_client_client_id_fk FOREIGN KEY (client_id) REFERENCES deal.client(client_id)
+    ON DELETE CASCADE;
 
 
 --
@@ -886,7 +887,8 @@ ALTER TABLE ONLY deal.employment
 --
 
 ALTER TABLE ONLY deal.passport
-    ADD CONSTRAINT passport_client_client_id_fk FOREIGN KEY (client_id) REFERENCES deal.client(client_id);
+    ADD CONSTRAINT passport_client_client_id_fk FOREIGN KEY (client_id) REFERENCES deal.client(client_id)
+    ON DELETE CASCADE;
 
 
 --

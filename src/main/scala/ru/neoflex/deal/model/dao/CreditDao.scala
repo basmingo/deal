@@ -4,6 +4,7 @@ import org.jooq.DSLContext
 import ru.neoflex.deal.configuration.JooqDsl
 import ru.neoflex.deal.configuration.deal.tables.Credit._
 import ru.neoflex.deal.configuration.deal.tables.CreditStatus._
+import ru.neoflex.deal.model.Credit._
 import ru.neoflex.deal.model.{Credit, CreditDbResponseDto, CreditMapper}
 import zio.macros.accessible
 import zio.{IO, Task, UIO, ZIO, ZLayer}

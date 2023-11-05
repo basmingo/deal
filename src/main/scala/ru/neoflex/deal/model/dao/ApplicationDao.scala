@@ -15,6 +15,8 @@ import scala.language.implicitConversions
 
 @accessible
 trait ApplicationDao {
+  def getLastId(dsl: JooqDsl): Task[Int]
+  def deleteAll(dsl: JooqDsl): Task[Unit]
 
   def insert(application: Application, dsl: JooqDsl): Task[Unit]
 
@@ -70,6 +72,10 @@ case class ApplicationDaoImpl(clientDao: ClientDao, creditDao: CreditDao) extend
           .set(APPLICATION.APPLIED_OFFER, toJsonb(applicationOffer))
           .execute
       )
+
+  override def deleteAll(dsl: JooqDsl): Task[Unit] = ???
+
+  override def getLastId(dsl: JooqDsl): Task[Int] = ???
 }
 
 object ApplicationDaoImpl {
