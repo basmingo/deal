@@ -1,13 +1,9 @@
 package ru.neoflex.deal.model.dao
 
-import org.jooq.JSONB
 import ru.neoflex.deal.configuration.JooqDsl
 import ru.neoflex.deal.configuration.deal.tables.Credit._
 import ru.neoflex.deal.configuration.deal.tables.CreditStatus._
-import ru.neoflex.deal.configuration.deal.tables.PaymentSchedule._
-import ru.neoflex.deal.model.jsonb.PaymentScheduleElement
 import ru.neoflex.deal.model.{Credit, CreditDbResponseDto, CreditMapper}
-import zio.json.EncoderOps
 import zio.macros.accessible
 import zio.{Task, ZIO, ZLayer}
 
@@ -79,7 +75,7 @@ case class CreditDaoImpl(creditStatusDao: CreditStatusDao, paymentScheduleDao: P
                         .where(CREDIT.CREDIT_ID.eq(id))
                         .fetchAnyInto(classOf[CreditDbResponseDto])
                     )
-      paymentSchedule <- paymentScheduleDao.get(creditData.creditId, dsl)
+      paymentSchedule <- paymentScheduleDao.getByCreditId(creditData.creditId, dsl)
       credit          <- CreditMapper.toCredit(creditData, paymentSchedule)
     } yield credit
 

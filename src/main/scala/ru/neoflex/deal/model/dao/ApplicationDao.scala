@@ -3,9 +3,8 @@ package ru.neoflex.deal.model.dao
 import org.jooq.JSONB
 import ru.neoflex.deal.configuration.JooqDsl
 import ru.neoflex.deal.configuration.deal.tables.Application._
-import ru.neoflex.deal.configuration.deal.tables.Credit._
-import ru.neoflex.deal.model.dao.ApplicationDaoImpl.toJsonb
 import ru.neoflex.deal.model.Application
+import ru.neoflex.deal.model.dao.ApplicationDaoImpl.toJsonb
 import ru.neoflex.deal.model.jsonb.ApplicationOffer
 import zio.json.EncoderOps
 import zio.macros.accessible
@@ -16,6 +15,7 @@ import scala.language.implicitConversions
 @accessible
 trait ApplicationDao {
   def getLastId(dsl: JooqDsl): Task[Int]
+
   def deleteAll(dsl: JooqDsl): Task[Unit]
 
   def insert(application: Application, dsl: JooqDsl): Task[Unit]

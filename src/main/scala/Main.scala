@@ -1,17 +1,6 @@
 import ru.neoflex.deal.configuration.{DslConnection, JooqDsl}
 import ru.neoflex.deal.model._
-import ru.neoflex.deal.model.dao.{
-  ApplicationDaoImpl,
-  ClientDao,
-  ClientDaoImpl,
-  CreditDao,
-  CreditDaoImpl,
-  CreditStatusDaoImpl,
-  EmploymentDaoImpl,
-  GenderDaoImpl,
-  MaritalStatusDaoImpl,
-  PassportDaoImpl
-}
+import ru.neoflex.deal.model.dao.{ApplicationDaoImpl, ClientDao, ClientDaoImpl, CreditDao, CreditDaoImpl, CreditStatusDaoImpl, EmploymentDaoImpl, GenderDaoImpl, MaritalStatusDaoImpl, PassportDaoImpl, PaymentScheduleDaoImpl}
 import ru.neoflex.deal.model.jsonb.{Employment, Passport}
 import zio.ExitCode.success
 import zio.json.DecoderOps
@@ -31,5 +20,6 @@ object Main extends ZIOAppDefault {
     CreditDaoImpl.live,
     CreditStatusDaoImpl.live,
     DslConnection.live,
+    PaymentScheduleDaoImpl.live
   )
 }

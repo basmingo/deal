@@ -73,7 +73,7 @@ ALTER SEQUENCE deal.application_application_id_seq OWNED BY deal.application.app
 --
 
 CREATE TABLE deal.application_status (
-                                            application_status integer NOT NULL,
+                                            application_status_id integer NOT NULL,
                                             status_type character varying NOT NULL
 );
 
@@ -99,7 +99,7 @@ ALTER SEQUENCE deal.application_status_application_status_seq OWNER TO admin;
 -- Name: application_status_application_status_seq; Type: SEQUENCE OWNED BY; Schema: deal; Owner: admin
 --
 
-ALTER SEQUENCE deal.application_status_application_status_seq OWNED BY deal.application_status.application_status;
+ALTER SEQUENCE deal.application_status_application_status_seq OWNED BY deal.application_status.application_status_id;
 
 
 --
@@ -494,7 +494,7 @@ ALTER TABLE ONLY deal.application ALTER COLUMN application_id SET DEFAULT nextva
 -- Name: application_status application_status; Type: DEFAULT; Schema: deal; Owner: admin
 --
 
-ALTER TABLE ONLY deal.application_status ALTER COLUMN application_status SET DEFAULT nextval('deal.application_status_application_status_seq'::regclass);
+ALTER TABLE ONLY deal.application_status ALTER COLUMN application_status_id SET DEFAULT nextval('deal.application_status_application_status_seq'::regclass);
 
 
 --
@@ -620,6 +620,15 @@ INSERT INTO deal.marital_status_type VALUES (3, 'DIVORCED');
 INSERT INTO deal.marital_status_type VALUES (4, 'WIDOWED');
 
 
+INSERT INTO deal.application_status (application_status_id, status_type) VALUES (DEFAULT, 'PREAPPROVAL');
+INSERT INTO deal.application_status (application_status_id, status_type) VALUES (DEFAULT, 'APPROVED');
+INSERT INTO deal.application_status (application_status_id, status_type) VALUES (DEFAULT, 'CC_DENIED');
+INSERT INTO deal.application_status (application_status_id, status_type) VALUES (DEFAULT, 'CC_APPROVED');
+INSERT INTO deal.application_status (application_status_id, status_type) VALUES (DEFAULT, 'PREPARE_DOCUMENTS');
+INSERT INTO deal.application_status (application_status_id, status_type) VALUES (DEFAULT, 'CLIENT_DENIED');
+INSERT INTO deal.application_status (application_status_id, status_type) VALUES (DEFAULT, 'DOCUMENT_SIGNED');
+INSERT INTO deal.application_status (application_status_id, status_type) VALUES (DEFAULT, 'CREDIT_ISSUED');
+
 --
 -- Data for Name: passport; Type: TABLE DATA; Schema: deal; Owner: admin
 --
@@ -742,7 +751,7 @@ ALTER TABLE ONLY deal.application
 --
 
 ALTER TABLE ONLY deal.application_status
-    ADD CONSTRAINT application_status_pk PRIMARY KEY (application_status);
+    ADD CONSTRAINT application_status_pk PRIMARY KEY (application_status_id);
 
 
 --
@@ -896,7 +905,8 @@ ALTER TABLE ONLY deal.passport
 --
 
 ALTER TABLE ONLY deal.payment_schedule
-    ADD CONSTRAINT payment_schedule_credit_credit_id_fk FOREIGN KEY (credit_id) REFERENCES deal.credit(credit_id);
+    ADD CONSTRAINT payment_schedule_credit_credit_id_fk FOREIGN KEY (credit_id) REFERENCES deal.credit(credit_id)
+    ON DELETE CASCADE;
 
 
 --
@@ -920,7 +930,7 @@ ALTER TABLE ONLY deal.status_history
 --
 
 ALTER TABLE ONLY deal.status_history
-    ADD CONSTRAINT status_history_current_status_fk FOREIGN KEY (current_status_id) REFERENCES deal.application_status(application_status);
+    ADD CONSTRAINT status_history_current_status_fk FOREIGN KEY (current_status_id) REFERENCES deal.application_status(application_status_id);
 
 
 --
@@ -928,7 +938,7 @@ ALTER TABLE ONLY deal.status_history
 --
 
 ALTER TABLE ONLY deal.status_history
-    ADD CONSTRAINT status_history_prev_status_fk FOREIGN KEY (previous_status_id) REFERENCES deal.application_status(application_status);
+    ADD CONSTRAINT status_history_prev_status_fk FOREIGN KEY (previous_status_id) REFERENCES deal.application_status(application_status_id);
 
 
 --

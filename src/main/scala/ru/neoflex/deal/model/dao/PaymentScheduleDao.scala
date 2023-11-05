@@ -9,23 +9,24 @@ import zio.{Task, ULayer, ZIO, ZLayer}
 import zio.macros.accessible
 
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 @accessible
 trait PaymentScheduleDao {
-  def get(id: Int, dsl: JooqDsl): Task[Seq[PaymentScheduleElement]]
+  def getByCreditId(id: Int, dsl: JooqDsl): Task[Seq[PaymentScheduleElement]]
 
   def insert(id: Int, schedules: Seq[PaymentScheduleElement], dsl: JooqDsl): Task[Unit]
 }
 
 case class PaymentScheduleDaoImpl() extends PaymentScheduleDao {
-  override def get(id: Int, dsl: JooqDsl): Task[Seq[PaymentScheduleElement]] =
+  override def getByCreditId(creditId: Int, dsl: JooqDsl): Task[Seq[PaymentScheduleElement]] =
     for {
       ctx <- dsl.getJooqContext
       paymentSchedule <- ZIO.succeed(
                            ctx
                              .select(PAYMENT_SCHEDULE.SCHEDULE_DATA)
                              .from(PAYMENT_SCHEDULE)
-                             .where(PAYMENT_SCHEDULE.CREDIT_ID.eq(id))
+                             .where(PAYMENT_SCHEDULE.CREDIT_ID.eq(creditId))
                              .fetch
                              .into(classOf[String])
                          )
@@ -36,18 +37,21 @@ case class PaymentScheduleDaoImpl() extends PaymentScheduleDao {
   override def insert(id: Int, schedules: Seq[PaymentScheduleElement], dsl: JooqDsl): Task[Unit] =
     for {
       ctx <- dsl.getJooqContext
-      batchInserts <- ZIO.succeed(
-                        ctx.batch(
-                          ctx
-                            .insertInto(PAYMENT_SCHEDULE, PAYMENT_SCHEDULE.CREDIT_ID, PAYMENT_SCHEDULE.SCHEDULE_DATA)
-                        )
-                      )
+      paymentSchedules <- ZIO.succeed(
+                            schedules
+                              .map(elem => JSONB.jsonb(elem.toJson))
+                              .map(elem =>
+                                ctx
+                                  .newRecord(PAYMENT_SCHEDULE.CREDIT_ID, PAYMENT_SCHEDULE.SCHEDULE_DATA)
+                                  .values(id, elem)
+                              )
+                          )
       _ <- ZIO.succeed(
-             schedules
-               .map(element => JSONB.jsonb(element.toJson))
-               .foreach(paymentSchedule => batchInserts.bind(id, paymentSchedule))
+             ctx
+               .insertInto(PAYMENT_SCHEDULE, PAYMENT_SCHEDULE.CREDIT_ID, PAYMENT_SCHEDULE.SCHEDULE_DATA)
+               .valuesOfRecords(paymentSchedules.asJava)
+               .execute()
            )
-      _ <- ZIO.succeed(batchInserts.execute())
     } yield ()
 }
 

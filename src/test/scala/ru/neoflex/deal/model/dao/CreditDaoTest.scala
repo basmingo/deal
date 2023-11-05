@@ -3,10 +3,11 @@ package ru.neoflex.deal.model.dao
 import ru.neoflex.deal.configuration.{DslConnection, JooqDsl}
 import ru.neoflex.deal.model.Credit
 import ru.neoflex.deal.model.jsonb.PaymentScheduleElement
+import zio.test.{Spec, TestEnvironment, ZIOSpecDefault, assertTrue}
 import zio.{Scope, ZIO}
-import zio.test.{Spec, TestEnvironment, ZIOSpecAbstract, ZIOSpecDefault, assertTrue, suite, test}
 
 import java.time.LocalDate
+import scala.collection.immutable.Seq
 
 object CreditDaoTest extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment with Scope, Any] = {
@@ -23,16 +24,34 @@ object CreditDaoTest extends ZIOSpecDefault {
         for {
           creditDao <- ZIO.service[CreditDao]
           dsl       <- ZIO.service[JooqDsl]
-          _ <-
-            creditDao.insert(Credit(None, 1, 0.5, 0.5, None, withInsurance = true, salaryClient = true, "ISSUED", Seq(PaymentScheduleElement(10, LocalDate.now, 10, 10, 10, 10))), dsl)
+          schedules <- ZIO.succeed(
+                         Seq(
+                           PaymentScheduleElement(10, LocalDate.now, 10, 10, 10, 10),
+                           PaymentScheduleElement(20, LocalDate.now, 20, 20, 20, 20),
+                           PaymentScheduleElement(30, LocalDate.now, 30, 30, 30, 30)
+                         )
+                       )
+          _ <- creditDao.insert(
+                 Credit(None, 1, 0.5, 0.5, None, withInsurance = true, salaryClient = true, "ISSUED", schedules),
+                 dsl
+               )
+          _ <- creditDao.insert(
+                 Credit(
+                   None,
+                   100,
+                   0.1,
+                   0.1,
+                   Some(0.32),
+                   withInsurance = true,
+                   salaryClient = true,
+                   "CALCULATED",
+                   schedules
+                 ),
+                 dsl
+               )
           _ <-
             creditDao.insert(
-              Credit(None, 100, 0.1, 0.1, Some(0.321), withInsurance = true, salaryClient = true, "CALCULATED"),
-              dsl
-            )
-          _ <-
-            creditDao.insert(
-              Credit(Some(13), 100, 0.1, 0.1, None, withInsurance = true, salaryClient = true, "CALCULATED"),
+              Credit(Some(13), 100, 0.1, 0.1, None, withInsurance = true, salaryClient = true, "CALCULATED", schedules),
               dsl
             )
           result <- creditDao.getLastId(dsl)
@@ -43,9 +62,18 @@ object CreditDaoTest extends ZIOSpecDefault {
         for {
           creditDao <- ZIO.service[CreditDao]
           dsl       <- ZIO.service[JooqDsl]
-          _         <- creditDao.deleteAll(dsl)
-          _ <-
-            creditDao.insert(Credit(None, 1, 0.5, 0.5, None, withInsurance = true, salaryClient = true, "ISSUED"), dsl)
+          _ <- creditDao.deleteAll(dsl)
+          schedules <- ZIO.succeed(
+                         Seq(
+                           PaymentScheduleElement(10, LocalDate.now, 10, 10, 10, 10),
+                           PaymentScheduleElement(20, LocalDate.now, 20, 20, 20, 20),
+                           PaymentScheduleElement(30, LocalDate.now, 30, 30, 30, 30)
+                         )
+                       )
+          _ <- creditDao.insert(
+                 Credit(None, 1, 0.5, 0.5, None, withInsurance = true, salaryClient = true, "ISSUED", schedules),
+                 dsl
+               )
           last   <- creditDao.getLastId(dsl)
           result <- creditDao.get(last, dsl)
         } yield assertTrue(result.creditId.map(_.toInt).contains(last))
@@ -54,6 +82,7 @@ object CreditDaoTest extends ZIOSpecDefault {
   }.provide(
     DslConnection.live,
     CreditDaoImpl.live,
-    CreditStatusDaoImpl.live
+    CreditStatusDaoImpl.live,
+    PaymentScheduleDaoImpl.live
   )
 }
