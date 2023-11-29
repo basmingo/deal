@@ -45,11 +45,12 @@ case class PaymentScheduleDaoImpl() extends PaymentScheduleDao {
                                   .newRecord(PAYMENT_SCHEDULE.CREDIT_ID, PAYMENT_SCHEDULE.SCHEDULE_DATA)
                                   .values(id, elem)
                               )
+                              .asJava
                           )
       _ <- ZIO.succeed(
              ctx
                .insertInto(PAYMENT_SCHEDULE, PAYMENT_SCHEDULE.CREDIT_ID, PAYMENT_SCHEDULE.SCHEDULE_DATA)
-               .valuesOfRecords(paymentSchedules.asJava)
+               .valuesOfRecords(paymentSchedules)
                .execute()
            )
     } yield ()

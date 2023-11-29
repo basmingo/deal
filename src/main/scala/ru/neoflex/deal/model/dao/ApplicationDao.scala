@@ -32,8 +32,9 @@ case class ApplicationDaoImpl(clientDao: ClientDao, creditDao: CreditDao) extend
       _        <- clientDao.insert(application.client, dsl)
       clientId <- clientDao.getLastId(dsl)
       _        <- creditDao.insert(application.credit, dsl)
-      creditId <-
-        creditDao.getLastId(dsl).orDieWith(_ => new RuntimeException("unexpected, possible insert was failed?"))
+      creditId <- creditDao
+                    .getLastId(dsl)
+                    .orDieWith(_ => new RuntimeException("unexpected, possible insert was failed?"))
       _ <- ZIO.succeed(
              ctx
                .insertInto(

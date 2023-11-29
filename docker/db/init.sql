@@ -37,6 +37,7 @@ CREATE TABLE deal.application (
                                      application_id integer NOT NULL,
                                      client_id integer NOT NULL,
                                      credit_id integer NOT NULL,
+                                     status_id integer not null,
                                      created timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
                                      applied_offer jsonb,
                                      signed timestamp without time zone,
@@ -849,7 +850,8 @@ ALTER TABLE ONLY deal.log
 ALTER TABLE ONLY deal.application
     ADD CONSTRAINT application_client_id_fk FOREIGN KEY (client_id) REFERENCES deal.client(client_id);
 
-
+ALTER TABLE ONLY deal.application
+    ADD CONSTRAINT status_id_application_status_id_fk FOREIGN KEY (status_id) REFERENCES deal.application_status;
 --
 -- Name: application application_credit_id_fk; Type: FK CONSTRAINT; Schema: deal; Owner: admin
 --
